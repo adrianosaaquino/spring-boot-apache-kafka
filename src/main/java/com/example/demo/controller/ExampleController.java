@@ -14,6 +14,11 @@ public class ExampleController {
     private static final String template = "Hello, %s!";
     private final AtomicLong counter = new AtomicLong();
 
+    /*
+    curl --location --request GET 'http://127.0.0.1:8080/helloWorld' | json_pp
+    curl --location --request GET 'http://127.0.0.1:8080/helloWorld?name=teste' | json_pp
+    * */
+
     @GetMapping("/helloWorld")
     public ExampleDTO greeting(@RequestParam(value = "name", defaultValue = "World") String name) {
 
@@ -24,6 +29,11 @@ public class ExampleController {
 
         return exampleDTO;
     }
+
+    /*
+    curl --location --request GET 'http://127.0.0.1:8080/echoGet' | json_pp
+    curl --location --request GET 'http://127.0.0.1:8080/echoGet' | json_pp
+    * */
 
     @GetMapping("/echoGet")
     public HashMap<String, String> echo(@RequestParam(value = "echo", defaultValue = "default....") String echo) {
@@ -36,6 +46,14 @@ public class ExampleController {
 
         return ret;
     }
+
+    /*
+    curl --location --request POST 'http://127.0.0.1:8080/echoPost' \
+    > --header 'Content-Type: application/json' \
+    > --data-raw '{
+    >     "name": "John"
+    > }' | json_pp
+    * */
 
     @PostMapping("/echoPost")
     public ExampleDTO echo(@RequestBody ExampleForm form) {
