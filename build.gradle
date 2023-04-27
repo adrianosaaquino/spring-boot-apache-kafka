@@ -1,5 +1,5 @@
 plugins {
-	id 'org.springframework.boot' version '2.7.3'
+	id 'org.springframework.boot' version '2.2.2.RELEASE'
 	id 'io.spring.dependency-management' version '1.0.13.RELEASE'
 	id 'java'
 }
@@ -16,6 +16,12 @@ dependencies {
 
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-devtools'
+
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	implementation 'org.springframework.data:spring-data-mongodb'
+
+	compileOnly 'org.projectlombok:lombok:1.18.26'
+	annotationProcessor "org.projectlombok:lombok:1.18.26"
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
