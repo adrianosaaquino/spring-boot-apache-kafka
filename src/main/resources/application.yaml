@@ -1,0 +1,42 @@
+spring:
+
+  kafka:
+    properties:
+      sasl:
+        jaas:
+          config: org.apache.kafka.common.security.plain.PlainLoginModule   required
+            username='IO53Q7LZNRNOPHQ6'   password='hYNqksg6FcaIrRzXj8bh8/6rI1G0toYxeaX6F7+f0ZfmbyuQU6NVfSnLZFtEmeig';
+        mechanism: PLAIN
+      security:
+        protocol: SASL_SSL
+      bootstrap:
+        servers: pkc-n00kk.us-east-1.aws.confluent.cloud:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: nb-ad-demo-01
+      enable-auto-commit: 'false'
+      auto-offset-reset: earliest
+      client-id: nb-ad-demo-01
+    listener:
+      ack-mode: manual
+
+  rabbitmq:
+    password: password
+    port: '5679'
+    host: localhost
+    username: user
+
+  data:
+    mongodb:
+      port: '27017'
+      host: localhost
+      database: loja
+
+app:
+  tempo-nack-ms: '10000'
+  topico-demo-produtos: demo-produtos
+  topico-demo-produtos.DLQ: demo-produtos.DLQ
+queue:
+  name: teste

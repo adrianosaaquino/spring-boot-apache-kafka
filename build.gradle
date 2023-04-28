@@ -20,6 +20,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation 'org.springframework.data:spring-data-mongodb'
 
+	implementation 'org.springframework.kafka:spring-kafka'
+	implementation 'org.springframework.boot:spring-boot-starter-json'
+
 	compileOnly 'org.projectlombok:lombok:1.18.26'
 	annotationProcessor "org.projectlombok:lombok:1.18.26"
 
