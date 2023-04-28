@@ -98,7 +98,7 @@ public class KafkaConsumidor {
 
   }
 
-  @KafkaListener(topics = "${app.topico-demo-produtos.DLQ}", errorHandler = "errorHandler....")
+  @KafkaListener(topics = "${app.topico-demo-produtos.DLQ}")
   public void consumirProdutoDTODLQ(@Payload String payload,
                                     @Header(value = KafkaHeaders.RECEIVED_MESSAGE_KEY, required = false) String key,
                                     @Header(KafkaHeaders.RECEIVED_TOPIC) String topico,
