@@ -35,7 +35,7 @@ public class KafkaConsumidor {
     this.myKafkaProducer = myKafkaProducer;
   }
 
-  @KafkaListener(topics = "${app.topico-demo-produtos}", errorHandler = "bla Hannnn")
+  @KafkaListener(topics = "${app.topico-demo-produtos}")
   public void consumirProdutoDTO(@Payload String payload,
                                  @Header(value = KafkaHeaders.RECEIVED_MESSAGE_KEY, required = false) String key,
                                  @Header(KafkaHeaders.RECEIVED_TOPIC) String topico,
