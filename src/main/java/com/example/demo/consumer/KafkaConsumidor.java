@@ -2,18 +2,26 @@ package com.example.demo.consumer;
 
 import com.example.demo.dto.ProdutoDTO;
 import com.example.demo.producer.MyKafkaProducer;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.errors.SerializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.retrytopic.FixedDelayStrategy;
+import org.springframework.kafka.retrytopic.TopicSuffixingStrategy;
 import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.kafka.support.serializer.DeserializationException;
 import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalTime;
 
@@ -35,86 +43,94 @@ public class KafkaConsumidor {
     this.myKafkaProducer = myKafkaProducer;
   }
 
-  @KafkaListener(topics = "${app.topico-demo-produtos}")
-  public void consumirProdutoDTO(@Payload String payload,
-                                 @Header(value = KafkaHeaders.RECEIVED_MESSAGE_KEY, required = false) String key,
-                                 @Header(KafkaHeaders.RECEIVED_TOPIC) String topico,
-                                 @Header(KafkaHeaders.RECEIVED_TIMESTAMP) long ts,
-                                 Acknowledgment ack) throws JsonProcessingException {
+  @EventListener(ApplicationReadyEvent.class)
+  public void runAfterStartup() throws IOException {
 
-    logger.info("[key][topico][ts][payload][{}][{}][{}][{}]", key, topico, ts, payload);
+    logger.info("runAfterStartup");
 
-    ProdutoDTO produtoDTO = objectMapper.readValue(payload, ProdutoDTO.class);
+    ProdutoDTO produtoDTO = ProdutoDTO.builder()
+            .name("Produto 02")
+            .preco(BigDecimal.ONE)
+            .build();
 
-    try {
+    myKafkaProducer.produceProdutoDTODLQ(produtoDTO);
 
-      logger.info("ProdutoDTO: [{}]", produtoDTO);
-
-      if (produtoDTO.getPreco().compareTo(new BigDecimal("10.00")) > 0) {
-
-        throw new IllegalArgumentException("Valor inválido, preço maior que [10.00]");
-      }
-
-      ack.acknowledge();
-      logger.info("Commit realizado");
-
-    } catch (IllegalArgumentException e) {
-
-      logger.error(e.getMessage());
-
-      int second = LocalTime.now().getSecond();
-
-      if ((second % 2) == 1) {
-
-        ack.acknowledge();
-
-        logger.info("Preço maior que [10.00] mas produto chegou em segundo ímpar, é válido, second [{}]", second);
-        logger.info("Commit realizado");
-
-      } else {
-
-        logger.info("Preço maior que [10.00] e produto chegou em segundo par, second [{}]", second);
-
-        int random = (int) ((Math.random() * (15 - 5)) + 5);
-
-        if (random <= 7) {
-
-          ack.acknowledge();
-          logger.info("random [{}] <= 7, commit....", random);
-
-        } else {
-
-          logger.info("random [{}] > 7, DLQ", random);
-          myKafkaProducer.produceProdutoDTODLQ(produtoDTO);
-
-        }
-      }
-
-    } catch (Exception e) {
-
-      logger.error("Erro desconhecido ao tentar salvar", e);
-      ack.acknowledge();
-    }
-
+    logger.info("runAfterStartup foi");
   }
 
-  @KafkaListener(topics = "${app.topico-demo-produtos.DLQ}")
-  public void consumirProdutoDTODLQ(@Payload String payload,
+  @RetryableTopic(
+          // retryTopicSuffix = "-retry",
+          attempts = "5",
+          fixedDelayTopicStrategy = FixedDelayStrategy.SINGLE_TOPIC,
+          // topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE,
+          backoff = @Backoff(10000),
+          // backoff = @Backoff(delay = 1000, multiplier = 2.0),
+          exclude = {
+                  SerializationException.class,
+                  DeserializationException.class
+          }
+  )
+  @KafkaListener(topics = "${app.topico-demo-produtos}")
+  public void consumirProdutoDTO(ConsumerRecord<String, ProdutoDTO> consumerRecord,
+                                 @Header(KafkaHeaders.RECEIVED_TOPIC) String topico) {
+
+    logger.info("[key][topico][ts][S][payload][{}][{}][{}]", topico, LocalTime.now().getSecond(), consumerRecord.value());
+
+    throw new IllegalArgumentException("Valor inválido, preço maior que [10.00]");
+
+    /*logger.info("[key][topico][ts][payload][{}][{}][{}][{}]", key, topico, ts, consumerRecord);
+
+    ProdutoDTO produtoDTO = consumerRecord.value();
+
+    logger.info("ProdutoDTO: [{}]", produtoDTO);
+
+    if (produtoDTO.getPreco().compareTo(new BigDecimal("10.00")) > 0) {
+
+      throw new IllegalArgumentException("Valor inválido, preço maior que [10.00]");
+    }
+
+    ack.acknowledge();
+    logger.info("Commit realizado");*/
+  }
+
+  @DltHandler
+  public void handleDlt(ConsumerRecord<String, ProdutoDTO> consumerRecord,
+                        @Header(KafkaHeaders.RECEIVED_TOPIC) String topico) {
+
+    logger.info("[key][topico][ts][S][payload][{}][{}][{}]", topico, LocalTime.now().getSecond(), consumerRecord.value());
+
+    /*logger.info("[key][topico][ts][payload][{}][{}][{}][{}]", key, topico, ts, consumerRecord.value());
+
+    ProdutoDTO produtoDTO = consumerRecord.value();
+
+    logger.info("Send to DLQ");
+    // myKafkaProducer.produceProdutoDTODLQ(produtoDTO);
+
+    ack.acknowledge();
+    logger.info("Commit realizado");*/
+  }
+
+  /*@KafkaListener(topics = "${app.topico-demo-produtos.DLQ}")
+  public void consumirProdutoDTODLQ(ConsumerRecord<String, ProdutoDTO> consumerRecord,
                                     @Header(value = KafkaHeaders.RECEIVED_MESSAGE_KEY, required = false) String key,
                                     @Header(KafkaHeaders.RECEIVED_TOPIC) String topico,
                                     @Header(KafkaHeaders.RECEIVED_TIMESTAMP) long ts,
                                     Acknowledgment ack) {
 
-    logger.info("[key][topico][ts][payload][{}][{}][{}][{}]", key, topico, ts, payload);
+    logger.info("[key][topico][ts][payload][{}][{}][{}][{}]", key, topico, ts, consumerRecord);
 
     try {
 
-      ProdutoDTO produtoDTO = objectMapper.readValue(payload, ProdutoDTO.class);
+      ProdutoDTO produtoDTO = consumerRecord.value();
+
       logger.info("ProdutoDTO: name  [{}]", produtoDTO.getName());
       logger.info("ProdutoDTO: preço [{}]", produtoDTO.getPreco());
       logger.info("ProdutoDTO: [{}]", produtoDTO);
 
-      int second = LocalTime.now().getSecond();
+      ack.acknowledge();
+      logger.info("Commit realizado");
+
+      *//*int second = LocalTime.now().getSecond();
 
       if ((second % 2) == 1) {
 
@@ -129,7 +145,7 @@ public class KafkaConsumidor {
         logger.error("Produto pode ser processado, second [{}]", second);
         ack.acknowledge();
         logger.info("Commit realizado");
-      }
+      }*//*
 
     } catch (Exception e) {
 
@@ -137,5 +153,5 @@ public class KafkaConsumidor {
       ack.acknowledge();
     }
 
-  }
+  }*/
 }

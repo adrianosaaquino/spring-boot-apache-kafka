@@ -1,22 +1,21 @@
 spring:
 
   kafka:
+    bootstrap-servers: pkc-n00kk.us-east-1.aws.confluent.cloud:9092
     properties:
-      sasl:
-        jaas:
-          config: org.apache.kafka.common.security.plain.PlainLoginModule   required
-            username='IO53Q7LZNRNOPHQ6'   password='hYNqksg6FcaIrRzXj8bh8/6rI1G0toYxeaX6F7+f0ZfmbyuQU6NVfSnLZFtEmeig';
-        mechanism: PLAIN
-      security:
-        protocol: SASL_SSL
-      bootstrap:
-        servers: pkc-n00kk.us-east-1.aws.confluent.cloud:9092
+      sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username='IO53Q7LZNRNOPHQ6' password='hYNqksg6FcaIrRzXj8bh8/6rI1G0toYxeaX6F7+f0ZfmbyuQU6NVfSnLZFtEmeig';
+      sasl.mechanism: PLAIN
+      security.protocol: SASL_SSL
+      spring.json.trusted.packages: "*"
+
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       group-id: nb-ad-demo-01
-      enable-auto-commit: 'false'
+      # enable-auto-commit: 'false'
       auto-offset-reset: earliest
       client-id: nb-ad-demo-01
     listener:

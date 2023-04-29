@@ -15,8 +15,8 @@ public class MyKafkaProducer {
 
   private final KafkaTemplate<String, ProdutoDTO> producerProdutoDTO;
 
-  @Value("${app.topico-demo-produtos.DLQ}")
-  private String topic;
+  // @Value("")
+  private String topic = "demo-produtos";
 
   public MyKafkaProducer(KafkaTemplate<String, ProdutoDTO> producerCreated) {
 
