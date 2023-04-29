@@ -59,12 +59,9 @@ public class KafkaConsumidor {
   }
 
   @RetryableTopic(
-          // retryTopicSuffix = "-retry",
           attempts = "5",
           fixedDelayTopicStrategy = FixedDelayStrategy.SINGLE_TOPIC,
-          // topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE,
           backoff = @Backoff(10000),
-          // backoff = @Backoff(delay = 1000, multiplier = 2.0),
           exclude = {
                   SerializationException.class,
                   DeserializationException.class
