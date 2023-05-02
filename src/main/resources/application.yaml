@@ -1,21 +1,23 @@
 spring:
 
   kafka:
-    bootstrap-servers: pkc-n00kk.us-east-1.aws.confluent.cloud:9092
+    bootstrap-servers: ${kafka-bootstrap-servers}
     properties:
-      sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username='IO53Q7LZNRNOPHQ6' password='hYNqksg6FcaIrRzXj8bh8/6rI1G0toYxeaX6F7+f0ZfmbyuQU6NVfSnLZFtEmeig';
+      sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username='${kafka-sasl.jaas.config.username}' password='${kafka-sasl.jaas.config.password}';
       sasl.mechanism: PLAIN
       security.protocol: SASL_SSL
       spring.json.trusted.packages: "*"
+      schema.registry.url: ${kafka-schema.registry.url}
+      basic.auth.credentials.source: USER_INFO
+      basic.auth.user.info: ${kafka-basic.auth.user.info}
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       group-id: nb-ad-demo-01
-      # enable-auto-commit: 'false'
       auto-offset-reset: earliest
       client-id: nb-ad-demo-01
     listener:
